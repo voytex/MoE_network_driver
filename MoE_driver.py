@@ -58,6 +58,8 @@ thread = threading.Thread(target=watcher)
 thread.start()
 
 out.sendto(b'\x08\x08\x08\x08', ('192.168.2.255', MOE_PORT))
+
+print("****** MoE Driver ****** \n'print' \tsee devices and their connections on the network \n'add' \t\tadd connection, from one device to another \n'del' \t\tdelete connection\n'reload' \treload the session. (e.g. when Arduino was restarted)")
 #out.sendto(b'\xFF\xFF\xFF\xFF', ('192.168.2.116', MOE_PORT))
 #out.sendto(b'\x0F\x04\x72\x03', ('192.168.2.116', MOE_PORT))
 #out.sendto(b'\x08\x08\x08\x08', ('192.168.2.255', MOE_PORT))
@@ -71,10 +73,22 @@ while True:
     if query == 'reload':
         devices.clear()
         out.sendto(b'\x08\x08\x08\x08', ('192.168.2.255', MOE_PORT))
+        print("*** session has been reloaded ***")
     if query == 'add':
         print("IP address: ", end=" ")
         address = input()
         print('sourceChannel destinationIP destinationChannel: ', end=" ")
         sc, dip, dc = input().split()
         out.sendto(bytes([15, int(sc) - 1, int(dip), int(dc) - 1]),(address, MOE_PORT))
+        out.sendto(b'\x08\x08\x08\x08', (address, MOE_PORT))
+        print("*** added ***")
+    if query == 'del':
+        print("IP address: ", end=" ")
+        address = input()
+        print('sourceChannel destinationIP destinationChannel: ', end=" ")
+        sc, dip, dc = input().split()
+        del devices[address]
+        out.sendto(bytes([14, int(sc) - 1, int(dip), int(dc) - 1]),(address, MOE_PORT))
+        out.sendto(b'\x08\x08\x08\x08', (address, MOE_PORT))  
+        print("*** deleted ***")     
     
