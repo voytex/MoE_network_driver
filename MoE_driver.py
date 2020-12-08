@@ -28,13 +28,15 @@ def watcher():
                 devices[addr[0]] = Device()
             if data[2] > 0:
                 devices[addr[0]].add_sub(data[1], data[2], data[3])
-            #devices[addr[0]].print_device()
-        #elif data[0] == 255: #\xFF
-        #    if addr[0] in devices.keys():
-        #        devices[addr[0]].del_all_subs()
-        #    else:
-        #        devices.update({addr[0], Device()})
-             
+
+def fill_all_channels(srcIP, srcCh, dstIP):
+    for i in range(16):
+        out.sendto(bytes([15, int(srcCh) - 1, int(dstIP),  int(i)]),(srcIP, MOE_PORT))
+
+def del_all_channels(srcIP, srcCh, dstIP):
+    for i in range(16):
+        out.sendto(bytes([14, int(srcCh) - 1, int(dstIP), int(i)]),(srcIP, MOE_PORT))
+
 
 
 devices = dict()
@@ -59,7 +61,7 @@ thread.start()
 
 out.sendto(b'\x08\x08\x08\x08', ('192.168.2.255', MOE_PORT))
 
-print("****** MoE Driver ****** \n'print' \tsee devices and their connections on the network \n'add' \t\tadd connection, from one device to another \n'del' \t\tdelete connection\n'reload' \treload the session. (e.g. when Arduino was restarted)")
+print("****** MoE Matrix Editor v0.5 ****** \n'print' \tsee devices and their connections on the network \n'add' \t\tadd connection, from one device to another \n'del' \t\tdelete connection\n'reload' \treload the session. (e.g. when Arduino was restarted)")
 #out.sendto(b'\xFF\xFF\xFF\xFF', ('192.168.2.116', MOE_PORT))
 #out.sendto(b'\x0F\x04\x72\x03', ('192.168.2.116', MOE_PORT))
 #out.sendto(b'\x08\x08\x08\x08', ('192.168.2.255', MOE_PORT))
@@ -79,7 +81,10 @@ while True:
         address = input()
         print('sourceChannel destinationIP destinationChannel: ', end=" ")
         sc, dip, dc = input().split()
-        out.sendto(bytes([15, int(sc) - 1, int(dip), int(dc) - 1]),(address, MOE_PORT))
+        if int(dc) == 255:
+            fill_all_channels(address, sc, dip)
+        else:
+            out.sendto(bytes([15, int(sc) - 1, int(dip), int(dc) - 1]),(address, MOE_PORT))
         out.sendto(b'\x08\x08\x08\x08', (address, MOE_PORT))
         print("*** added ***")
     if query == 'del':
@@ -88,7 +93,10 @@ while True:
         print('sourceChannel destinationIP destinationChannel: ', end=" ")
         sc, dip, dc = input().split()
         del devices[address]
-        out.sendto(bytes([14, int(sc) - 1, int(dip), int(dc) - 1]),(address, MOE_PORT))
+        if int(dc) == 255:
+            del_all_channels(address, sc, dip)
+        else:
+            out.sendto(bytes([14, int(sc) - 1, int(dip), int(dc) - 1]),(address, MOE_PORT))
         out.sendto(b'\x08\x08\x08\x08', (address, MOE_PORT))  
         print("*** deleted ***")     
     
